@@ -15,37 +15,18 @@ import 'text_button_theme.dart';
 import 'outlined_button_theme.dart';
 
 
-class _Default<T> implements MaterialStateProperty<T> {
-  const _Default({
-    this.disabled,
-    this.hovered,
-    this.focused,
-    this.pressed,
-    this.dragged,
-    this.selected,
-    this.error,
-    this.other,
-  });
+// Temporary proxy for TBD static MaterialStateProperty<T>.all(T value)
+class MaterialStatePropertyAll<T> implements MaterialStateProperty<T> {
+  const MaterialStatePropertyAll(this.value);
 
-  final T disabled;
-  final T hovered;
-  final T focused;
-  final T pressed;
-  final T dragged;
-  final T selected;
-  final T error;
-  final T other;
+  final T value;
 
   @override
-  T resolve(Set<MaterialState> states) {
-    return (states.contains(MaterialState.disabled) ? disabled : null)
-        ?? (states.contains(MaterialState.pressed) ? pressed : null)
-        ?? (states.contains(MaterialState.dragged) ? dragged : null)
-        ?? (states.contains(MaterialState.selected) ? selected : null)
-        ?? (states.contains(MaterialState.hovered) ? hovered : null)
-        ?? (states.contains(MaterialState.focused) ? focused : null)
-        ?? (states.contains(MaterialState.error) ? error : null)
-        ?? other;
+  T resolve(Set<MaterialState> states) => value;
+
+  @override
+  String toString() {
+    return '$runtimeType($value)';
   }
 }
 
@@ -422,25 +403,35 @@ class TextButton extends _ButtonStyleButton {
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
   }) {
-    final MaterialStateProperty<Color> foregroundColor = _Default<Color>(
-      disabled: onSurface?.withOpacity(0.38),
-      other: primary
-    );
-    final MaterialStateProperty<Color> overlayColor = _Default<Color>(
-      hovered: primary?.withOpacity(0.04),
-      focused: primary?.withOpacity(0.12),
-      pressed: primary?.withOpacity(0.12),
-    );
-
+    final MaterialStateProperty<Color> foregroundColor = (onSurface == null && primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled))
+              return onSurface?.withOpacity(0.38);
+            return primary;
+          },
+        );
+    final MaterialStateProperty<Color> overlayColor = (primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.hovered))
+              return primary?.withOpacity(0.04);
+            if (states.contains(MaterialState.focused) || states.contains(MaterialState.pressed))
+              return primary?.withOpacity(0.12);
+            return null;
+          }
+        );
     return ButtonStyle(
-      textStyle: _Default<TextStyle>(other: textStyle),
+      textStyle: MaterialStatePropertyAll<TextStyle>(textStyle),
       foregroundColor: foregroundColor,
-      backgroundColor: _Default<Color>(other: backgroundColor),
+      backgroundColor: MaterialStatePropertyAll<Color>(backgroundColor),
       overlayColor: overlayColor,
-      elevation: _Default<double>(other: elevation),
-      padding: _Default<EdgeInsetsGeometry>(other: padding),
-      minimumSize: _Default<Size>(other: minimumSize),
-      shape: _Default<ShapeBorder>(other: shape),
+      elevation: MaterialStatePropertyAll<double>(elevation),
+      padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
+      minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
     );
@@ -596,6 +587,7 @@ class ContainedButton extends _ButtonStyleButton {
     Color primary,
     Color onPrimary,
     Color onSurface,
+    double elevation,
     TextStyle textStyle,
     EdgeInsetsGeometry padding,
     Size minimumSize,
@@ -603,28 +595,55 @@ class ContainedButton extends _ButtonStyleButton {
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
   }) {
-    final MaterialStateProperty<Color> backgroundColor = _Default<Color>(
-      disabled: onSurface?.withOpacity(0.12),
-      other: primary
-    );
-    final MaterialStateProperty<Color> foregroundColor = _Default<Color>(
-      disabled: onSurface?.withOpacity(0.38),
-      other: onPrimary
-    );
-    final MaterialStateProperty<Color> overlayColor = _Default<Color>(
-      hovered: primary?.withOpacity(0.08),
-      focused: primary?.withOpacity(0.24),
-      pressed: primary?.withOpacity(0.24),
-    );
-
+    final MaterialStateProperty<Color> backgroundColor = (onSurface == null && primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled))
+              return onSurface?.withOpacity(0.12);
+            return primary;
+          }
+        );
+    final MaterialStateProperty<Color> foregroundColor = (onSurface == null && primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled))
+              return onSurface?.withOpacity(0.38);
+            return onPrimary;
+          }
+        );
+    final MaterialStateProperty<Color> overlayColor = (onPrimary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.hovered))
+              return onPrimary?.withOpacity(0.08);
+            if (states.contains(MaterialState.focused) || states.contains(MaterialState.pressed))
+              return onPrimary?.withOpacity(0.24);
+            return null;
+          }
+        );
+    final MaterialStateProperty<double> elevationValue = (elevation == null)
+      ? null
+      : MaterialStateProperty.resolveWith<double>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled)) return 0;
+            if (states.contains(MaterialState.hovered)) return elevation + 2;
+            if (states.contains(MaterialState.focused)) return elevation + 2;
+            if (states.contains(MaterialState.pressed)) return elevation + 6;
+            return elevation;
+          }
+        );
     return ButtonStyle(
-      textStyle: _Default<TextStyle>(other: textStyle),
+      textStyle: MaterialStatePropertyAll<TextStyle>(textStyle),
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
       overlayColor: overlayColor,
-      padding: _Default<EdgeInsetsGeometry>(other: padding),
-      minimumSize: _Default<Size>(other: minimumSize),
-      shape: _Default<ShapeBorder>(other: shape),
+      elevation: elevationValue,
+      padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
+      minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
     );
@@ -635,39 +654,15 @@ class ContainedButton extends _ButtonStyleButton {
     final ThemeData theme = Theme.of(context);
     final ColorScheme colorScheme = theme.colorScheme;
 
-    final MaterialStateProperty<TextStyle> textStyle = _Default<TextStyle>(
-      other: theme.textTheme.button,
-    );
-    final MaterialStateProperty<Color> backgroundColor = _Default<Color>(
-      disabled: colorScheme.onSurface.withOpacity(0.12),
-      other: colorScheme.primary
-    );
-    final MaterialStateProperty<Color> foregroundColor = _Default<Color>(
-      disabled: colorScheme.onSurface.withOpacity(0.38),
-      other: colorScheme.onPrimary
-    );
-    final MaterialStateProperty<Color> overlayColor = _Default<Color>(
-      hovered: colorScheme.onPrimary.withOpacity(0.08),
-      focused: colorScheme.onPrimary.withOpacity(0.24),
-      pressed: colorScheme.onPrimary.withOpacity(0.24),
-    );
-    final MaterialStateProperty<double> elevation = _Default<double>(
-      disabled: 0.0,
-      hovered: 4,
-      focused: 4,
-      pressed: 8,
-      other: 2.0,
-    );
-
-    return ButtonStyle(
-      textStyle: textStyle,
-      backgroundColor: backgroundColor,
-      foregroundColor: foregroundColor,
-      overlayColor: overlayColor,
-      elevation: elevation,
-      padding: const _Default<EdgeInsetsGeometry>(other: EdgeInsets.all(16)),
-      minimumSize: const _Default<Size>(other: Size(0, 44)),
-      shape: const _Default<ShapeBorder>(other: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4)))),
+    return styleFrom(
+      primary: colorScheme.primary,
+      onPrimary: colorScheme.onPrimary,
+      onSurface: colorScheme.onSurface,
+      elevation: 2,
+      textStyle: theme.textTheme.button,
+      padding: const EdgeInsets.all(16),
+      minimumSize: const Size(0, 44),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       visualDensity: theme.visualDensity,
       tapTargetSize: theme.materialTapTargetSize,
     );
@@ -741,25 +736,35 @@ class OutlinedButton extends _ButtonStyleButton {
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
   }) {
-    final MaterialStateProperty<Color> foregroundColor = _Default<Color>(
-      disabled: onSurface?.withOpacity(0.38),
-      other: primary
-    );
-    final MaterialStateProperty<Color> overlayColor = _Default<Color>(
-      hovered: primary?.withOpacity(0.04),
-      focused: primary?.withOpacity(0.12),
-      pressed: primary?.withOpacity(0.12),
-    );
-
+    final MaterialStateProperty<Color> foregroundColor = (onSurface == null && primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.disabled))
+              return onSurface?.withOpacity(0.38);
+            return primary;
+          },
+        );
+    final MaterialStateProperty<Color> overlayColor = (primary == null)
+      ? null
+      : MaterialStateProperty.resolveWith<Color>(
+          (Set<MaterialState> states) {
+            if (states.contains(MaterialState.hovered))
+              return primary?.withOpacity(0.04);
+            if (states.contains(MaterialState.focused) || states.contains(MaterialState.pressed))
+              return primary?.withOpacity(0.12);
+            return null;
+          }
+        );
     return ButtonStyle(
-      textStyle: _Default<TextStyle>(other: textStyle),
+      textStyle: MaterialStatePropertyAll<TextStyle>(textStyle),
       foregroundColor: foregroundColor,
-      backgroundColor: _Default<Color>(other: backgroundColor),
+      backgroundColor: MaterialStatePropertyAll<Color>(backgroundColor),
       overlayColor: overlayColor,
-      elevation: _Default<double>(other: elevation),
-      padding: _Default<EdgeInsetsGeometry>(other: padding),
-      minimumSize: _Default<Size>(other: minimumSize),
-      shape: _Default<ShapeBorder>(other: shape),
+      elevation: MaterialStatePropertyAll<double>(elevation),
+      padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
+      minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
     );
