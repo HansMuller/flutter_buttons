@@ -580,6 +580,45 @@ class ContainedButton extends _ButtonStyleButton {
     child: child,
   );
 
+  factory ContainedButton.icon({
+    Key key,
+    @required VoidCallback onPressed,
+    VoidCallback onLongPress,
+    ButtonStyle style,
+    FocusNode focusNode,
+    bool autofocus = false,
+    Clip clipBehavior = Clip.none,
+    bool enableFeedback = true,
+    Duration animationDuration = kThemeChangeDuration,
+    @required Widget icon,
+    @required Widget label,
+  }) {
+    assert(icon != null);
+    assert(label != null);
+    const ButtonStyle paddingStyle = ButtonStyle(
+      padding: MaterialStatePropertyAll<EdgeInsets>(EdgeInsets.only(left: 12, right: 16)),
+    );
+    return ContainedButton(
+      key: key,
+      onPressed: onPressed,
+      onLongPress: onLongPress,
+      style: style == null ? paddingStyle : style.merge(paddingStyle),
+      focusNode: focusNode,
+      autofocus: autofocus,
+      clipBehavior: clipBehavior,
+      enableFeedback: enableFeedback,
+      animationDuration: animationDuration,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          icon,
+          const SizedBox(width: 8.0),
+          label,
+        ],
+      ),
+    );
+  }
+
   @override
   _ContainedButtonState createState() => _ContainedButtonState();
 
@@ -604,7 +643,7 @@ class ContainedButton extends _ButtonStyleButton {
             return primary;
           }
         );
-    final MaterialStateProperty<Color> foregroundColor = (onSurface == null && primary == null)
+    final MaterialStateProperty<Color> foregroundColor = (onSurface == null && onPrimary == null)
       ? null
       : MaterialStateProperty.resolveWith<Color>(
           (Set<MaterialState> states) {
@@ -660,8 +699,8 @@ class ContainedButton extends _ButtonStyleButton {
       onSurface: colorScheme.onSurface,
       elevation: 2,
       textStyle: theme.textTheme.button,
-      padding: const EdgeInsets.all(16),
-      minimumSize: const Size(0, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      minimumSize: const Size(64, 36),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       visualDensity: theme.visualDensity,
       tapTargetSize: theme.materialTapTargetSize,
@@ -720,6 +759,45 @@ class OutlinedButton extends _ButtonStyleButton {
     animationDuration: animationDuration,
     child: child,
   );
+
+  factory OutlinedButton.icon({
+    Key key,
+    @required VoidCallback onPressed,
+    VoidCallback onLongPress,
+    ButtonStyle style,
+    FocusNode focusNode,
+    bool autofocus = false,
+    Clip clipBehavior = Clip.none,
+    bool enableFeedback = true,
+    Duration animationDuration = kThemeChangeDuration,
+    @required Widget icon,
+    @required Widget label,
+  }) {
+    assert(icon != null);
+    assert(label != null);
+    const ButtonStyle paddingStyle = ButtonStyle(
+      padding: MaterialStatePropertyAll<EdgeInsets>(EdgeInsets.only(left: 12, right: 16)),
+    );
+    return OutlinedButton(
+      key: key,
+      onPressed: onPressed,
+      onLongPress: onLongPress,
+      style: style == null ? paddingStyle : style.merge(paddingStyle),
+      focusNode: focusNode,
+      autofocus: autofocus,
+      clipBehavior: clipBehavior,
+      enableFeedback: enableFeedback,
+      animationDuration: animationDuration,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          icon,
+          const SizedBox(width: 8.0),
+          label,
+        ],
+      ),
+    );
+  }
 
   @override
   _OutlinedButtonState createState() => _OutlinedButtonState();
@@ -781,8 +859,8 @@ class OutlinedButton extends _ButtonStyleButton {
       backgroundColor: Colors.transparent,
       textStyle: theme.textTheme.button,
       elevation: 0,
-      padding: EdgeInsets.all(16),
-      minimumSize: Size(0, 36),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      minimumSize: Size(64, 36),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(4)),
         side: BorderSide(
