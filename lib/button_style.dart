@@ -16,6 +16,7 @@ class ButtonStyle with Diagnosticable {
     this.elevation,
     this.padding,
     this.minimumSize,
+    this.side,
     this.shape,
     this.visualDensity,
     this.tapTargetSize,
@@ -28,6 +29,7 @@ class ButtonStyle with Diagnosticable {
   final MaterialStateProperty<double> elevation;
   final MaterialStateProperty<EdgeInsetsGeometry> padding;
   final MaterialStateProperty<Size> minimumSize;
+  final MaterialStateProperty<BorderSide> side;
   final MaterialStateProperty<ShapeBorder> shape;
   final VisualDensity visualDensity;
   final MaterialTapTargetSize tapTargetSize;
@@ -42,6 +44,7 @@ class ButtonStyle with Diagnosticable {
     MaterialStateProperty<double> elevation,
     MaterialStateProperty<EdgeInsetsGeometry> padding,
     MaterialStateProperty<Size> minimumSize,
+    MaterialStateProperty<BorderSide> side,
     MaterialStateProperty<ShapeBorder> shape,
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
@@ -54,6 +57,7 @@ class ButtonStyle with Diagnosticable {
       elevation: elevation ?? this.elevation,
       padding: padding ?? this.padding,
       minimumSize: minimumSize ?? this.minimumSize,
+      side: side ?? this.side,
       shape: shape ?? this.shape,
       visualDensity: visualDensity ?? this.visualDensity,
       tapTargetSize: tapTargetSize ?? this.tapTargetSize,
@@ -73,6 +77,7 @@ class ButtonStyle with Diagnosticable {
       elevation: style.elevation ?? elevation,
       padding: style.padding ?? padding,
       minimumSize: style.minimumSize ?? minimumSize,
+      side: style.side ?? side,
       shape: style.shape ?? shape,
       visualDensity: style.visualDensity ?? visualDensity,
       tapTargetSize: style.tapTargetSize ?? tapTargetSize,
@@ -89,6 +94,7 @@ class ButtonStyle with Diagnosticable {
       elevation,
       padding,
       minimumSize,
+      side,
       shape,
       visualDensity,
       tapTargetSize,
@@ -109,6 +115,7 @@ class ButtonStyle with Diagnosticable {
         && other.elevation == elevation
         && other.padding == padding
         && other.minimumSize == minimumSize
+        && other.side == side
         && other.shape == shape
         && other.visualDensity == visualDensity
         && other.tapTargetSize == tapTargetSize;
@@ -124,6 +131,7 @@ class ButtonStyle with Diagnosticable {
       if (elevation != null) 'elevation',
       if (padding != null) 'padding',
       if (minimumSize != null) 'minimumSize',
+      if (side != null) 'side',
       if (shape != null) 'shape',
       if (visualDensity != null) 'visualDensity',
       if (tapTargetSize != null) 'tapTargetSize',
@@ -145,6 +153,7 @@ class ButtonStyle with Diagnosticable {
     properties.add(DiagnosticsProperty<MaterialStateProperty<double>>('elevation', elevation, defaultValue: null));
     properties.add(DiagnosticsProperty<MaterialStateProperty<EdgeInsetsGeometry>>('padding', padding, defaultValue: null));
     properties.add(DiagnosticsProperty<MaterialStateProperty<Size>>('minimumSize', minimumSize, defaultValue: null));
+    properties.add(DiagnosticsProperty<MaterialStateProperty<BorderSide>>('side', side, defaultValue: null));
     properties.add(DiagnosticsProperty<MaterialStateProperty<ShapeBorder>>('shape', shape, defaultValue: null));
     properties.add(DiagnosticsProperty<VisualDensity>('visualDensity', visualDensity, defaultValue: null));
     properties.add(EnumProperty<MaterialTapTargetSize>('tapTargetSize', tapTargetSize, defaultValue: null));
@@ -162,6 +171,7 @@ class ButtonStyle with Diagnosticable {
       elevation: _lerpDoubles(a?.elevation, b?.elevation, t),
       padding: _lerpInsets(a?.padding, b?.padding, t),
       minimumSize: _lerpSizes(a?.minimumSize, b?.minimumSize, t),
+      side: _lerpSides(a?.side, b?.side, t),
       shape: _lerpShapes(a?.shape, b?.shape, t),
       visualDensity: t < 0.5 ? a.visualDensity : b.visualDensity,
       tapTargetSize: t < 0.5 ? a.tapTargetSize : b.tapTargetSize,
@@ -196,6 +206,12 @@ class ButtonStyle with Diagnosticable {
     if (a == null && b == null)
       return null;
     return _LerpSizes(a, b, t);
+  }
+
+  static MaterialStateProperty<BorderSide> _lerpSides(MaterialStateProperty<BorderSide> a, MaterialStateProperty<BorderSide> b, double t) {
+    if (a == null && b == null)
+      return null;
+    return _LerpSides(a, b, t);
   }
 
   static MaterialStateProperty<ShapeBorder> _lerpShapes(MaterialStateProperty<ShapeBorder> a, MaterialStateProperty<ShapeBorder> b, double t) {
@@ -277,6 +293,21 @@ class _LerpSizes implements MaterialStateProperty<Size> {
     final Size resolvedA = a?.resolve(states);
     final Size resolvedB = b?.resolve(states);
     return Size.lerp(resolvedA, resolvedB, t);
+  }
+}
+
+class _LerpSides implements MaterialStateProperty<BorderSide> {
+  const _LerpSides(this.a, this.b, this.t);
+
+  final MaterialStateProperty<BorderSide> a;
+  final MaterialStateProperty<BorderSide> b;
+  final double t;
+
+  @override
+  BorderSide resolve(Set<MaterialState> states) {
+    final BorderSide resolvedA = a?.resolve(states);
+    final BorderSide resolvedB = b?.resolve(states);
+    return BorderSide.lerp(resolvedA, resolvedB, t);
   }
 }
 

@@ -30,6 +30,46 @@ class MaterialStatePropertyAll<T> implements MaterialStateProperty<T> {
   }
 }
 
+// Temporary proxy for TBD ShapeBorder.withSide(BorderSide side)
+shapeBorderWithSide(ShapeBorder shape, BorderSide side) {
+  if (shape == null)
+    return shape;
+  if (shape is RoundedRectangleBorder) {
+    return RoundedRectangleBorder(
+      borderRadius: shape.borderRadius,
+      side: side,
+    );
+  }
+  if (shape is BeveledRectangleBorder) {
+    return BeveledRectangleBorder(
+      borderRadius: shape.borderRadius,
+      side: side,
+    );
+  }
+  if (shape is StadiumBorder) {
+    return StadiumBorder(
+      side: side,
+    );
+  }
+  if (shape is CircleBorder) {
+    return CircleBorder(
+      side: side,
+    );
+  }
+  if (shape is ContinuousRectangleBorder) {
+    return ContinuousRectangleBorder(
+      borderRadius: shape.borderRadius,
+      side: side,
+    );
+  }
+  if (shape is CircleBorder) {
+    return CircleBorder(
+      side: side,
+    );
+  }
+  return shape;
+}
+
 abstract class _ButtonStyleButton extends StatefulWidget {
   const _ButtonStyleButton({
     Key key,
@@ -165,6 +205,9 @@ abstract class _ButtonStyleState<T extends _ButtonStyleButton> extends State<T> 
       widgetStyle?.minimumSize, themeStyle?.minimumSize, defaultStyle.minimumSize,
 
     );
+    final BorderSide resolvedSide = _resolve<BorderSide>(
+      widgetStyle?.side, themeStyle?.side, defaultStyle.side,
+    );
     final ShapeBorder resolvedShape = _resolve<ShapeBorder>(
       widgetStyle?.shape, themeStyle?.shape, defaultStyle.shape,
     );
@@ -204,7 +247,7 @@ abstract class _ButtonStyleState<T extends _ButtonStyleButton> extends State<T> 
       child: Material(
         elevation: resolvedElevation,
         textStyle: resolvedTextStyle?.copyWith(color: resolvedForegroundColor),
-        shape: resolvedShape,
+        shape: shapeBorderWithSide(resolvedShape, resolvedSide), // resolvedShape?.withSide(resolvedSide)
         color: resolvedBackgroundColor,
         type: resolvedBackgroundColor == null ? MaterialType.transparency : MaterialType.button,
         animationDuration: widget.animationDuration,
@@ -399,6 +442,7 @@ class TextButton extends _ButtonStyleButton {
     double elevation,
     EdgeInsetsGeometry padding,
     Size minimumSize,
+    BorderSide side,
     ShapeBorder shape,
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
@@ -431,6 +475,7 @@ class TextButton extends _ButtonStyleButton {
       elevation: MaterialStatePropertyAll<double>(elevation),
       padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
       minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      side: MaterialStatePropertyAll<BorderSide>(side),
       shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
@@ -450,6 +495,7 @@ class TextButton extends _ButtonStyleButton {
       elevation: 0,
       padding: EdgeInsets.all(8),
       minimumSize: Size(0, 36),
+      side: BorderSide.none,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       visualDensity: theme.visualDensity,
       tapTargetSize: theme.materialTapTargetSize,
@@ -630,6 +676,7 @@ class ContainedButton extends _ButtonStyleButton {
     TextStyle textStyle,
     EdgeInsetsGeometry padding,
     Size minimumSize,
+    BorderSide side,
     ShapeBorder shape,
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
@@ -682,6 +729,7 @@ class ContainedButton extends _ButtonStyleButton {
       elevation: elevationValue,
       padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
       minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      side: MaterialStatePropertyAll<BorderSide>(side),
       shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
@@ -701,6 +749,7 @@ class ContainedButton extends _ButtonStyleButton {
       textStyle: theme.textTheme.button,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       minimumSize: const Size(64, 36),
+      side: BorderSide.none,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(4))),
       visualDensity: theme.visualDensity,
       tapTargetSize: theme.materialTapTargetSize,
@@ -810,6 +859,7 @@ class OutlinedButton extends _ButtonStyleButton {
     double elevation,
     EdgeInsetsGeometry padding,
     Size minimumSize,
+    BorderSide side,
     ShapeBorder shape,
     VisualDensity visualDensity,
     MaterialTapTargetSize tapTargetSize,
@@ -842,6 +892,7 @@ class OutlinedButton extends _ButtonStyleButton {
       elevation: MaterialStatePropertyAll<double>(elevation),
       padding: MaterialStatePropertyAll<EdgeInsetsGeometry>(padding),
       minimumSize: MaterialStatePropertyAll<Size>(minimumSize),
+      side: MaterialStatePropertyAll<BorderSide>(side),
       shape: MaterialStatePropertyAll<ShapeBorder>(shape),
       visualDensity: visualDensity,
       tapTargetSize: tapTargetSize,
@@ -861,12 +912,12 @@ class OutlinedButton extends _ButtonStyleButton {
       elevation: 0,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       minimumSize: Size(64, 36),
+      side: BorderSide(
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
+        width: 1,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(4)),
-        side: BorderSide(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.12),
-          width: 2,
-        ),
       ),
       visualDensity: theme.visualDensity,
       tapTargetSize: theme.materialTapTargetSize,
