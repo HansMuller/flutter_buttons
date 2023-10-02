@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+import 'dart:convert' show json;
+import 'package:flutter/services.dart' show rootBundle;
+
+enum StatusColor { active, submitted, inactive }
+
+class StepperData {
+  final DateTime dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperData({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+class StepDataService {
+  Future<List<StepperData>> loadStepData() async {
+    final jsonString = await rootBundle.loadString('assets/step_data.json');
+    final jsonData = json.decode(jsonString);
+    final List<StepperData> steps = [];
+
+    for (var data in jsonData) {
+      steps.add(StepperData(
+        dateTime: DateTime.parse(data['dateTime']),
+        userName: data['name'],
+        status: getStatusColorFromString(data['status']),
+        userType: data['userType'],
+      ));
+    }
+
+    return steps;
+  }
+
+  StatusColor getStatusColorFromString(String status) {
+    switch (status) {
+      case 'active':
+        return StatusColor.active;
+      case 'submitted':
+        return StatusColor.submitted;
+      case 'inactive':
+        return StatusColor.inactive;
+      default:
+        return StatusColor.inactive;
+    }
+  }
+}
+
+class HorizontalStepper extends StatefulWidget {
+  final List<StepperData> steps;
+
+  HorizontalStepper({required this.steps}) : super(key: UniqueKey());
+
+  @override
+  _HorizontalStepperState createState() => _HorizontalStepperState();
+}
+
+class _HorizontalStepperState extends State<HorizontalStepper> {
+  int currentStep = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'Date and Time: ${widget.steps.isNotEmpty ? widget.steps[currentStep].dateTime.toString() : ""}',
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+        CustomPaint(
+          size: Size(500, 50), // Adjust the size as needed
+          painter: StepperLinesPainter(stepCount: widget.steps.length),
+        ),
+        Expanded(
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.steps.length,
+            itemBuilder: (context, index) {
+              return buildStep(index);
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            'User Type: ${widget.steps.isNotEmpty ? widget.steps[currentStep].userType : ""}',
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildStep(int index) {
+    final step = widget.steps[index];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          '${step.dateTime.toString()}',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: step.status == StatusColor.active
+                ? Colors.blue
+                : step.status == StatusColor.submitted
+                ? Colors.green
+                : Colors.red,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            step.status == StatusColor.active
+                ? Icons.check
+                : step.status == StatusColor.submitted
+                ? Icons.check
+                : Icons.close,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Text(
+          '${step.userName}',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 4.0),
+        Text(
+          '(${step.userType})',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+          ),
+        ),
+        SizedBox(height: 4.0),
+        Text(
+          step.status == StatusColor.active
+              ? 'Success'
+              : step.status == StatusColor.submitted
+              ? 'Success'
+              : 'Failure',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+}
+
+class StepperLinesPainter extends CustomPainter {
+  final int stepCount;
+
+  StepperLinesPainter({required this.stepCount});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2;
+
+    final spaceBetweenCircles = size.width / (stepCount - 1);
+    final circleRadius = size.height / 2;
+
+    for (var i = 0; i < stepCount - 1; i++) {
+      final x1 = (i + 0.5) * spaceBetweenCircles;
+      final y1 = circleRadius;
+      final x2 = (i + 1) * spaceBetweenCircles;
+      final y2 = circleRadius;
+
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Custom Horizontal Stepper'),
+        ),
+        body: FutureBuilder<List<StepperData>>(
+          future: StepDataService().loadStepData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No data available.'));
+            } else {
+              return HorizontalStepper(steps: snapshot.data!);
+            }
+          },
+
+        ),
+      ),
+    );
+  }
+
+
+}
+
+void main() {
+  runApp(MyApp());
+}
+
+//
+// class StepperLinesPainter extends CustomPainter {
+//   final int stepCount;
+//
+//   StepperLinesPainter({required this.stepCount});
+//
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final linePaint = Paint()
+//       ..color = Colors.black
+//       ..strokeWidth = 2;
+//
+//     final circleRadius = 25.0;
+//     final spaceBetweenCircles = size.width / (stepCount - 1);
+//
+//     // Draw the horizontal line
+//     final lineY = size.height / 2;
+//     canvas.drawLine(Offset(0, lineY), Offset(size.width, lineY), linePaint);
+//
+//     // Draw the circles
+//     for (var i = 0; i < stepCount; i++) {
+//       final x = i * spaceBetweenCircles;
+//       final y = size.height / 2;
+//
+//       final circleCenter = Offset(x, y);
+//       canvas.drawCircle(circleCenter, circleRadius, linePaint);
+//     }
+//   }
+//
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) {
+//     return false;
+//   }
+// }
