@@ -1,0 +1,38 @@
+[
+  {
+    "dateTime": "2023-10-10T10:00:00",
+    "name": "John Doe",
+    "status": "active",
+    "userType": "Admin"
+  },
+  {
+    "dateTime": "2023-10-11T11:00:00",
+    "name": "Jane Smith",
+    "status": "submitted",
+    "userType": "Manager"
+  },
+  {
+    "dateTime": "2023-10-12T12:00:00",
+    "name": "Alice Johnson",
+    "status": "active",
+    "userType": "Employee"
+  },
+  {
+    "dateTime": "2023-10-13T13:00:00",
+    "name": "Bob Brown",
+    "status": "inactive",
+    "userType": "Admin"
+  },
+  {
+    "dateTime": "2023-10-14T14:00:00",
+    "name": "Eve Davis",
+    "status": "submitted",
+    "userType": "Manager"
+  },
+  {
+    "dateTime": "2023-10-15T15:00:00",
+    "name": "Charlie Wilson",
+    "status": "active",
+    "userType": "Employee"
+  }
+]
