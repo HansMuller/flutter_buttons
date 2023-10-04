@@ -1,0 +1,269 @@
+import 'package:flutter/material.dart';
+import 'dart:convert' show json;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:intl/intl.dart';
+
+enum StatusColor { active, submitted, inactive }
+
+class StepperData {
+  final DateTime dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperData({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+class StepDataService {
+  Future<List<StepperData>> loadStepData() async {
+    final jsonString = await rootBundle.loadString('assets/step_data.json');
+    final jsonData = json.decode(jsonString);
+    final List<StepperData> steps = [];
+
+    for (var data in jsonData) {
+      steps.add(StepperData(
+        dateTime: DateTime.parse(data['dateTime']),
+        userName: data['name'],
+        status: getStatusColorFromString(data['status']),
+        userType: data['userType'],
+      ));
+    }
+
+    return steps;
+  }
+
+  StatusColor getStatusColorFromString(String status) {
+    switch (status) {
+      case 'active':
+        return StatusColor.active;
+      case 'submitted':
+        return StatusColor.submitted;
+      case 'inactive':
+        return StatusColor.inactive;
+      default:
+        return StatusColor.inactive;
+    }
+  }
+}
+
+class HorizontalStepper extends StatelessWidget {
+  final List<StepperData> steps;
+  ScrollController controller = ScrollController();
+  HorizontalStepper({required this.steps});
+
+  @override
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 250, // Set your desired fixed height
+      child: Card(
+        elevation: 4, // Customize the elevation as needed
+        margin: const EdgeInsets.all(16), // Add margin as needed
+        child: Scrollbar(
+          trackVisibility: true,// Show scrollbar always
+          thickness: 10,
+          controller: controller,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (int index = 0; index < steps.length; index++)
+                  buildStep(index),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
+  Widget buildStep(int index) {
+    final step = steps[index];
+    final dateFormat = DateFormat('MM/dd/yyyy');
+    final timeFormat = DateFormat('hh:mm a');
+
+    return Container(
+      width: 200, // Adjust the width of each step card as needed
+      margin: EdgeInsets.all(8), // Add margin as needed
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            dateFormat.format(step.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            timeFormat.format(step.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: step.status == StatusColor.active
+                      ? Colors.blue
+                      : step.status == StatusColor.submitted
+                      ? Colors.green
+                      : Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  step.status == StatusColor.active
+                      ? Icons.check
+                      : step.status == StatusColor.submitted
+                      ? Icons.check
+                      : Icons.close,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              if (index < steps.length - 1 &&
+                  (step.status == StatusColor.active ||
+                      step.status == StatusColor.submitted))
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  color: Colors.grey, // Set the color of the line
+                )
+              else
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  child: CustomPaint(
+                    painter: DottedLinePainter(),
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 150,
+                child: Text(
+                  '${step.userName} (${step.userType})',
+                  maxLines: 5, // Set the maximum number of lines
+                  overflow: TextOverflow.ellipsis, // Truncate with ellipsis if too long
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class DottedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 1
+      ..strokeCap = StrokeCap.round;
+
+    final dashWidth = 5;
+    final dashSpace = 5;
+    double startY = 0;
+
+    while (startY < size.height) {
+      canvas.drawLine(
+        Offset(0, startY),
+        Offset(0, startY + dashWidth),
+        paint,
+      );
+      startY += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+
+class StepperLinesPainter extends CustomPainter {
+  final int stepCount;
+
+  StepperLinesPainter({required this.stepCount});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2;
+
+    final spaceBetweenCircles = size.width / (stepCount - 1);
+    final circleRadius = size.height / 2;
+
+    for (var i = 0; i < stepCount - 1; i++) {
+      final x1 = (i + 0.5) * spaceBetweenCircles;
+      final y1 = circleRadius;
+      final x2 = (i + 1) * spaceBetweenCircles;
+      final y2 = circleRadius;
+
+      canvas.drawLine(Offset(x1, y1), Offset(x2, y2), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Custom Horizontal Stepper'),
+        ),
+        body: FutureBuilder<List<StepperData>>(
+          future: StepDataService().loadStepData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No data available.'));
+            } else {
+              return HorizontalStepper(steps: snapshot.data!);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+void main() {
+  runApp(MyApp());
+}
