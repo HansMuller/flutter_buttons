@@ -1,0 +1,342 @@
+import 'package:flutter/material.dart';
+import 'dart:convert' show json;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:intl/intl.dart';
+
+enum StatusColor { active, submitted, inactive }
+
+class StepperData {
+  final DateTime dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperData({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+
+class StepperDataTest {
+  final String dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperDataTest({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+
+class StepDataService {
+  Future<List<StepperDataTest>> loadStepData() async {
+    final jsonString = await rootBundle.loadString('assets/step_data.json');
+    final jsonData = json.decode(jsonString);
+    final List<StepperDataTest> steps = [];
+
+    for (var data in jsonData) {
+      steps.add(StepperDataTest(
+        dateTime:data['name'],
+        userName: data['name'],
+        status: getStatusColorFromString(data['status']),
+        userType: data['userType'],
+      ));
+    }
+
+    return steps;
+  }
+
+  StatusColor getStatusColorFromString(String status) {
+    switch (status) {
+      case 'active':
+        return StatusColor.active;
+      case 'submitted':
+        return StatusColor.submitted;
+      case 'inactive':
+        return StatusColor.inactive;
+      default:
+        return StatusColor.inactive;
+    }
+  }
+}
+
+abstract class HorizontalStepper<T> extends StatelessWidget {
+  final List<T> steps;
+
+  const HorizontalStepper({super.key, required this.steps});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 250, // Set your desired fixed height
+      child: Card(
+        elevation: 4, // Customize the elevation as needed
+        margin: const EdgeInsets.all(16), // Add margin as needed
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (int index = 0; index < steps.length; index++)
+                buildStep(index, steps[index]),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildStep(int index, T step) {
+    if (step == null) return const SizedBox(); // Check for null
+
+    final StepperData data = step as StepperData;
+    final dateFormat = DateFormat('MM/dd/yyyy');
+    final timeFormat = DateFormat('hh:mm a');
+
+    return Container(
+      width: 200, // Adjust the width of each step card as needed
+      margin: const EdgeInsets.all(8), // Add margin as needed
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            dateFormat.format(data.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            timeFormat.format(data.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: data.status == StatusColor.active
+                      ? Colors.blue
+                      : data.status == StatusColor.submitted
+                      ? Colors.green
+                      : Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  data.status == StatusColor.active
+                      ? Icons.check
+                      : data.status == StatusColor.submitted
+                      ? Icons.check
+                      : Icons.close,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              if (index < steps.length - 1 &&
+                  (data.status == StatusColor.active ||
+                      data.status == StatusColor.submitted))
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  color: Colors.grey, // Set the color of the line
+                )
+              else
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  child: CustomPaint(
+                    painter: DottedLinePainter(),
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Text(
+                  '${data.userName} (${data.userType})',
+                  maxLines: 5, // Set the maximum number of lines
+                  overflow: TextOverflow.ellipsis, // Truncate with ellipsis if too long
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StepperDataStepper extends HorizontalStepper<StepperDataTest> {
+  const StepperDataStepper({super.key, required super.steps});
+
+  @override
+  Widget buildStep(int index, StepperDataTest data) {
+
+    return Container(
+      width: 200, // Adjust the width of each step card as needed
+      margin: const EdgeInsets.all(8), // Add margin as needed
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            /*dateFormat.format(data.dateTime),*/ '23,45,54',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          const Text(
+            /*timeFormat.format(data.dateTime),*/ '23,45,54',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: data.status == StatusColor.active
+                      ? Colors.blue
+                      : data.status == StatusColor.submitted
+                      ? Colors.green
+                      : Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  data.status == StatusColor.active
+                      ? Icons.check
+                      : data.status == StatusColor.submitted
+                      ? Icons.check
+                      : Icons.close,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              if (index < steps.length - 1 &&
+                  (data.status == StatusColor.active ||
+                      data.status == StatusColor.submitted))
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  color: Colors.grey, // Set the color of the line
+                )
+              else
+                Container(
+                  width: 150,
+                  height: 1, // Adjust the height of the line as needed
+                  child: CustomPaint(
+                    painter: DottedLinePainter(),
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Text(
+                  '${data.userName} (${data.userType})',
+                  maxLines: 5, // Set the maximum number of lines
+                  overflow: TextOverflow.ellipsis, // Truncate with ellipsis if too long
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+     }
+}
+
+
+class DottedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 1
+      ..strokeCap = StrokeCap.round;
+
+    final dashWidth = 5;
+    final dashSpace = 5;
+    double startY = 0;
+
+    while (startY < size.height) {
+      canvas.drawLine(
+        Offset(0, startY),
+        Offset(0, startY + dashWidth),
+        paint,
+      );
+      startY += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Custom Horizontal Stepper'),
+        ),
+        body: FutureBuilder<List<StepperDataTest>>(
+          future: StepDataService().loadStepData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No data available.'));
+            } else {
+              return StepperDataStepper(steps: snapshot.data!);
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+void main() {
+  runApp(MyApp());
+}
