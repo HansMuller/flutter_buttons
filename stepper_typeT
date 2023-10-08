@@ -1,0 +1,281 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class StepperData {
+  final DateTime dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperData({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+enum StatusColor {
+  active,
+  submitted,
+  // Add other statuses as needed
+}
+
+class StepperDataHolder<T> {
+  final List<T> stepperHolder;
+
+  StepperDataHolder({
+    required this.stepperHolder,
+  });
+}
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final List<StepperDataHolder<StepperData>> stepperDataList = [
+      StepperDataHolder(
+        stepperHolder: [
+          StepperData(
+            dateTime: DateTime.parse("2023-10-10T10:00:00"),
+            userName: "John Doe",
+            status: StatusColor.active,
+            userType: "Admin",
+          ),
+          StepperData(
+            dateTime: DateTime.parse("2023-10-11T11:00:00"),
+            userName: "Jane Smith",
+            status: StatusColor.submitted,
+            userType: "Manager",
+          ),
+          // Add more data here as needed
+        ],
+      ),
+    ];
+
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Horizontal Stepper Example'),
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              // Wrap the HorizontalStepper with SingleChildScrollView
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: HorizontalStepper(
+                  steps: stepperDataList[0].stepperHolder,
+                  dateFormat: DateFormat('MM/dd/yyyy'),
+                  timeFormat: DateFormat('hh:mm a'),
+                  stepColors: [
+                    Colors.blue,
+                    Colors.green,
+                    Colors.orange,
+                  ],
+                  stepIcons: [
+                    Icons.check_circle,
+                    Icons.check_circle,
+                    Icons.check_circle,
+                  ],
+                  stepIconSizes: [30, 30, 30],
+                  stepLabels: ['Step 1', 'Step 2', 'Step 3'],
+                  stepWidth: 150,
+                  stepHeight: 200,
+                  stepLineHeight: 3,
+                  stepLineColor: Colors.grey,
+                  stepLineWidth: 2,
+                  scrollDirection: Axis.horizontal,
+                  rejectedStepIcon: Icons.cancel,
+                  color: Colors.red,
+                  strokeWidth: 4.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HorizontalStepper<T> extends StatelessWidget {
+  final List<T> steps;
+  final DateFormat dateFormat;
+  final DateFormat timeFormat;
+  final List<Color> stepColors;
+  final List<IconData> stepIcons;
+  final List<double> stepIconSizes;
+  final List<String> stepLabels;
+  final double stepWidth;
+  final double stepHeight;
+  final double stepLineHeight;
+  final Color stepLineColor;
+  final double stepLineWidth;
+  final Axis scrollDirection;
+  final IconData rejectedStepIcon;
+  final Color color;
+  final double strokeWidth;
+
+  const HorizontalStepper({
+    Key? key,
+    required this.steps,
+    required this.dateFormat,
+    required this.timeFormat,
+    required this.stepColors,
+    required this.stepIcons,
+    required this.stepIconSizes,
+    required this.stepLabels,
+    required this.stepWidth,
+    required this.stepHeight,
+    required this.stepLineHeight,
+    required this.stepLineColor,
+    required this.stepLineWidth,
+    required this.scrollDirection,
+    required this.rejectedStepIcon,
+    required this.color,
+    required this.strokeWidth,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: stepHeight,
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            for (int index = 0; index < steps.length; index++)
+              buildStep(index, steps[index]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildStep(int index, T stepHolder) {
+    final StepperData stepperData = (stepHolder as StepperData);
+
+    return Container(
+      width: stepWidth,
+      margin: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            customDateFormatter(stepperData.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            customTimeFormatter(stepperData.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: stepIconSizes[index],
+                height: stepIconSizes[index],
+                decoration: BoxDecoration(
+                  color: stepColors[index],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  stepIcons[index],
+                  color: Colors.white,
+                  size: stepIconSizes[index],
+                ),
+              ),
+              if (index < steps.length - 1)
+                Container(
+                  width: stepLineHeight,
+                  height: stepLineHeight,
+                  color: stepLineColor,
+                )
+              else
+                Container(
+                  width: stepLineHeight,
+                  height: stepLineHeight,
+                  child: CustomPaint(
+                    painter: DottedLinePainter(
+                      color: stepLineColor,
+                      strokeWidth: stepLineWidth,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Text(
+                  '${stepperData.userName} (${stepperData.userType})',
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String customDateFormatter(DateTime dateTime) {
+    return dateFormat.format(dateTime);
+  }
+
+  String customTimeFormatter(DateTime dateTime) {
+    return timeFormat.format(dateTime);
+  }
+}
+
+class DottedLinePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  DottedLinePainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth;
+    final double dashWidth = 5;
+    final double dashSpace = 5;
+    double startY = 0;
+
+    while (startY < size.height) {
+      canvas.drawLine(
+        Offset(0, startY),
+        Offset(0, startY + dashWidth),
+        paint,
+      );
+      startY += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) {
+    return false;
+  }
+}
