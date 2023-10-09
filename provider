@@ -1,0 +1,311 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+// Define your StepperData class
+class StepperData {
+  final DateTime dateTime;
+  final String userName;
+  final StatusColor status;
+  final String userType;
+
+  StepperData({
+    required this.dateTime,
+    required this.userName,
+    required this.status,
+    required this.userType,
+  });
+}
+
+// Define your StatusColor enum
+enum StatusColor {
+  active,
+  submitted,
+  // Add other statuses as needed
+}
+
+final stepperDataProvider = Provider<List<StepperData>>((ref) {
+  // Replace this with your actual data source
+  return [
+    StepperData(
+      dateTime: DateTime.parse("2023-10-10T10:00:00"),
+      userName: "John Doe",
+      status: StatusColor.active,
+      userType: "Admin",
+    ),
+    StepperData(
+      dateTime: DateTime.parse("2023-10-11T11:00:00"),
+      userName: "Jane Smith",
+      status: StatusColor.submitted,
+      userType: "Manager",
+    ),
+    // Add more data here as needed
+  ];
+});
+
+class HorizontalStepper<T> extends StatelessWidget {
+  final List<T> steps;
+  final DateFormat dateFormat;
+  final DateFormat timeFormat;
+  final List<Color> stepColors;
+  final List<IconData> stepIcons;
+  final List<double> stepIconSizes;
+  final List<String> stepLabels;
+  final double stepWidth;
+  final double stepHeight;
+  final double stepLineHeight;
+  final Color stepLineColor;
+  final double stepLineWidth;
+  final Axis scrollDirection;
+  final IconData rejectedStepIcon;
+  final Color color;
+  final double strokeWidth;
+
+  const HorizontalStepper({
+    Key? key,
+    required this.steps,
+    required this.dateFormat,
+    required this.timeFormat,
+    required this.stepColors,
+    required this.stepIcons,
+    required this.stepIconSizes,
+    required this.stepLabels,
+    required this.stepWidth,
+    required this.stepHeight,
+    required this.stepLineHeight,
+    required this.stepLineColor,
+    required this.stepLineWidth,
+    required this.scrollDirection,
+    required this.rejectedStepIcon,
+    required this.color,
+    required this.strokeWidth,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: stepHeight,
+      child: Card(
+        elevation: 4,
+        margin: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            for (int index = 0; index < steps.length; index++)
+              buildStep(index, steps[index]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildStep(int index, T stepHolder) {
+    final StepperData stepperData = (stepHolder as StepperData);
+
+    return Container(
+      width: stepWidth,
+      margin: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            customDateFormatter(stepperData.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Text(
+            customTimeFormatter(stepperData.dateTime),
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: stepIconSizes[index],
+                height: stepIconSizes[index],
+                decoration: BoxDecoration(
+                  color: stepColors[index],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  stepIcons[index],
+                  color: Colors.white,
+                  size: stepIconSizes[index],
+                ),
+              ),
+              if (index < steps.length - 1)
+                Container(
+                  width: stepLineHeight,
+                  height: stepLineHeight,
+                  color: stepLineColor,
+                )
+              else
+                Container(
+                  width: stepLineHeight,
+                  height: stepLineHeight,
+                  child: CustomPaint(
+                    painter: DottedLinePainter(
+                      color: stepLineColor,
+                      strokeWidth: stepLineWidth,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Text(
+                  '${stepperData.userName} (${stepperData.userType})',
+                  maxLines: 5,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String customDateFormatter(DateTime dateTime) {
+    return dateFormat.format(dateTime);
+  }
+
+  String customTimeFormatter(DateTime dateTime) {
+    return timeFormat.format(dateTime);
+  }
+}
+
+class WidgetValueLoader<T> extends ConsumerWidget {
+  final ProviderBase<AsyncValue<T>> provider;
+  final Widget Function(T) builder;
+  final Widget Function() loadingBuilder;
+  final Widget Function(Object?, StackTrace?)? errorBuilder;
+
+  const WidgetValueLoader({
+    required this.provider,
+    required this.builder,
+    required this.loadingBuilder,
+    this.errorBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context, ScopedReader watch) {
+    final asyncValue = watch(provider);
+
+    return asyncValue.when(
+      data: builder,
+      loading: (_) => loadingBuilder(),
+      error: (error, stackTrace) {
+        if (errorBuilder != null) {
+          return errorBuilder!(error, stackTrace);
+        } else {
+          return Text('Error: $error');
+        }
+      },
+    );
+  }
+}
+
+showMyDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('My Dialog'),
+        content: Consumer(builder: (context, ref, child) {
+          // Use WidgetValueLoader to watch the provider
+          final stepperData = ref.watch(stepperDataProvider);
+
+          return Column(
+            children: [
+              // Use WidgetValueLoader to handle the data state
+              WidgetValueLoader(
+                provider: stepperDataProvider,
+                builder: (data) {
+                  return HorizontalStepper(
+                    steps: data,
+                    dateFormat: DateFormat('MM/dd/yyyy'),
+                    timeFormat: DateFormat('hh:mm a'),
+                    stepColors: [
+                      Colors.blue,
+                      Colors.green,
+                      Colors.orange,
+                    ],
+                    stepIcons: [
+                      Icons.check_circle,
+                      Icons.check_circle,
+                      Icons.check_circle,
+                    ],
+                    stepIconSizes: [30, 30, 30],
+                    stepLabels: ['Step 1', 'Step 2', 'Step 3'],
+                    stepWidth: 150,
+                    stepHeight: 200,
+                    stepLineHeight: 3,
+                    stepLineColor: Colors.grey,
+                    stepLineWidth: 2,
+                    scrollDirection: Axis.horizontal,
+                    rejectedStepIcon: Icons.cancel,
+                    color: Colors.red,
+                    strokeWidth: 4.0,
+                  );
+                },
+                loadingBuilder: () {
+                  return CircularProgressIndicator();
+                },
+                errorBuilder: (error, stackTrace) {
+                  return Text('Error: $error');
+                },
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Close'),
+              ),
+            ],
+          );
+        }),
+      );
+    },
+  );
+}
+
+void main() {
+  runApp(ProviderScope(child: MyApp()));
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Horizontal Stepper Example'),
+        ),
+        body: Center(
+          child: ElevatedButton(
+            onPressed: () {
+              showMyDialog(context);
+            },
+            child: Text('Open Dialog'),
+          ),
+        ),
+      ),
+    );
+  }
+}
